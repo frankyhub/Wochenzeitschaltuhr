@@ -1,0 +1,174 @@
+<!DOCTYPE HTML> <!-- For more information visit: https://fipsok.de -->
+<html lang="de">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style32.css">
+    <title>ESP32 Admin</title>
+    <SCRIPT>
+      window.addEventListener('load', () => {
+        document.querySelector('#spiff').addEventListener('click', () => {
+          window.location = '/spiffs.html';
+        });
+        document.querySelector('#home').addEventListener('click', () => {
+          window.location = '/';
+        });
+        document.querySelector('#restart').addEventListener('click', () => {
+          if (confirm('Bist du sicher!')) re('restart');
+        });
+        document.querySelector('#reconnect').addEventListener('click', re.bind(this, 'reconnect'));
+        document.querySelector('#hostbutton').addEventListener('click', check.bind(this, document.querySelector('input')));
+        once();
+        var output = document.querySelector('#note');
+        function once(arg1, arg2) {
+          fetch('/admin/once', {
+            method: 'POST',
+            body: arg1
+          }).then( resp => {
+            return resp.json();
+          }).then( obj => {
+            output.innerHTML = '';
+            output.classList.remove('note');
+            document.querySelector('form').reset();
+            if (arg1 == undefined) wait = window.setInterval(renew, 1000);
+            if (arg2 == 'reconnect') re(arg2);
+            document.querySelector('#file').innerHTML = obj['File'];
+            document.querySelector('#build').innerHTML = obj['Build'];
+            document.querySelector('#local').innerHTML = obj['LocalIP'];
+            document.querySelector('#host').innerHTML = obj['Hostname'];
+            document.querySelector('#ssid').innerHTML = obj['SSID'];
+            document.querySelector('#gateway').innerHTML = obj['GatewayIP'];
+            document.querySelector('#kanal').innerHTML = obj['Channel'];
+            document.querySelector('#mac').innerHTML = obj['MacAddress'];
+            document.querySelector('#subnet').innerHTML = obj['SubnetMask'];
+            document.querySelector('#bss').innerHTML = obj['BSSID'];
+            document.querySelector('#client').innerHTML = obj['ClientIP'];
+            document.querySelector('#dns').innerHTML = obj['DnsIP'];
+            document.querySelector('#reset1').innerHTML = obj['Reset1'];
+            document.querySelector('#reset2').innerHTML = obj['Reset2'];
+            document.querySelector('#cpufreq').innerHTML = obj['CpuFreqMHz'];
+            document.querySelector('#freeheap').innerHTML = obj['FreeHeap'];
+            document.querySelector('#csize').innerHTML = obj['ChipSize'];
+            document.querySelector('#cspeed').innerHTML = obj['ChipSpeed'];
+            document.querySelector('#cmode').innerHTML = obj['ChipMode'];
+			document.querySelector('#ide').innerHTML = obj['IdeVersion'].replace(/(\d)(\d)(\d)(\d)/,obj['IdeVersion'][3]!=0 ? '$1.$3.$4' : '$1.$3.');
+            document.querySelector('#sdk').innerHTML = obj['SdkVersion'];
+          }).catch(function (err) {
+            re();
+          });
+        }
+        function renew() {
+          fetch('admin/renew').then( resp => {
+            return resp.json();
+          }).then( array => {
+            document.querySelector('#runtime').innerHTML = array[0];
+            document.querySelector('#temp').innerHTML = array[1];
+            document.querySelector('#rssi').innerHTML = array[2];
+          });
+        }
+        function check(inObj) {
+          !inObj.checkValidity() ? (output.innerHTML = inObj.validationMessage, output.classList.add('note')) : (once(inObj.value, 'reconnect'));
+        }
+        function re(arg) {
+          window.clearInterval(wait);
+          fetch(arg);
+          output.classList.add('note');
+          if (arg == 'restart') {
+            output.innerHTML = 'Der Server wird neu gestartet. Die Daten werden in 10 Sekunden neu geladen.';
+            setTimeout(once, 10000);
+          } else if (arg == 'reconnect') {
+            output.innerHTML = 'Die WiFi Verbindung wird neu gestartet. Daten werden in 5 Sekunden neu geladen.';
+            setTimeout(once, 5000);
+          } else {
+            output.innerHTML = 'Es ist ein Verbindungfehler aufgetreten. Es wird versucht neu zu verbinden.';
+            setTimeout(once, 2000);
+          }
+        }
+      });
+    </SCRIPT>
+  </head>
+  <body>
+    <h1>ESP32 Admin Page</h1>
+    <main>
+      <section id="left">
+        <span>Runtime ESP:</span>
+        <span>WiFi RSSI:</span>
+        <span>CPU Temperatur:</span>
+        <span>Sketch Name:</span>
+        <span>Sketch Build:</span>
+        <span>IP address:</span>
+        <span>Hostname:</span>
+        <span>Connected to:</span>
+        <span>Gateway IP:</span>
+        <span>Channel:</span>
+        <span>MacAddress:</span>
+        <span>SubnetMask:</span>
+        <span>BSSID:</span>	  
+        <span>Client IP:</span>
+        <span>DnsIP:</span>
+        <span>Reset CPU 1:</span>
+        <span>Reset CPU 2:</span>
+        <span>CPU Freq:</span>
+        <span>FreeHeap:</span>	   
+        <span>FlashSize:</span>
+        <span>FlashSpeed:</span>
+        <span>FlashMode:</span>
+		<span>Arduino IDE Version:</span>
+        <span>SDK-Version:</span>
+      </section>
+      <section>
+        <data id="runtime">00:00:00</data>
+        <div>
+          <data id="rssi"></data>
+          dBm
+        </div>
+        <div>
+          <data id="temp"></data>
+          °C
+        </div>
+        <data id="file">?</data>
+        <data id="build">0</data>
+        <data id="local">0</data>
+        <data id="host">?</data>
+        <data id="ssid">?</data>
+        <data id="gateway">0</data>
+        <data id="kanal">0</data>
+        <data id="mac">0</data>
+        <data id="subnet">0</data>
+        <data id="bss">0</data>
+        <data id="client">0</data>
+        <data id="dns">0</data>
+        <data id="reset1">0</data>
+        <data id="reset2">0</data>
+        <div>
+          <data id="cpufreq"></data>
+          MHz
+        </div>
+        <data id="freeheap">0</data>
+        <data id="csize">0</data>
+        <div>
+          <data id="cspeed"></data>
+          MHz
+        </div>
+        <data id="cmode">0</data>
+		<data id="ide">0</data>
+        <data id="sdk">0</data>
+      </section>
+    </main>
+    <div>
+      <button class="button" id="spiff">Spiffs</button>
+      <button class="button" id="home">Startseite</button>
+    </div>
+    <div id="note"></div>
+    <div>
+      <form><input placeholder=" neuer Hostname" pattern="([A-Za-z0-9-]{1,32})" title="Es dürfen nur Buchstaben 
+	    (a-z, A-Z), Ziffern (0-9) und Bindestriche (-) enthalten sein. Maximal 32 Zeichen" required>
+        <button class="button" type="button" id="hostbutton">Name Senden</button>
+      </form>
+    </div>
+    <div>
+      <button class="button" id="reconnect">WiFi Reconnect</button>
+      <button class="button" id="restart">ESP Restart</button>
+    </div>
+  </body>
+</html>
